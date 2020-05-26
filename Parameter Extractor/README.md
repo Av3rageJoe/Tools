@@ -1,9 +1,8 @@
 # Parameter Extractor
 
-This is a small bash program that will take a list of urls, and extract all the parameters used inside the urls. 
-It will then save these parameters to a file.
+This isprogram has been updated so that it also extracts path names and parameter names from a url. It has been compiled to work on python3.
 
-USAGE: `parameter-extractor.sh <URL List>`
+USAGE: `python3 parameter-extractor.py <URL List>`
 
 Example:
 
@@ -17,13 +16,13 @@ https://github.com/?smallparam=woah&HUGEPARAM=BANG
 https://yahoo.com/?smallparam=duplicate
 ```
 
-`./parameter-extractor.sh URL-List.txt`
+`./parameter-extractor.py URL-List.txt`
 
-Output saved in parameters.txt:
+Output saved in 'Parameter Names.txt':
 
 ```
 BigParam
-smallparam
 HUGEPARAM
+smallparam
 ```
 
