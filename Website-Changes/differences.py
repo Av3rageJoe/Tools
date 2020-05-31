@@ -74,8 +74,14 @@ def PercentageDifference(originalSize, newSize):
 		return True
 
 def codeDifference(originalCode, newCode):
-	if(originalCode == newCode):
+	if(originalCode == "error" and newCode != "error"):
+		return True
+	elif(newCode == "error" and newCode != "error"):
+		return True
+	elif(originalCode == "error" and newCode == "error"):
 		return False
+	newCode = int(newCode)
+	originalCode = int(originalCode)
 	if(originalCode == newCode):
 		return False
 	else:
