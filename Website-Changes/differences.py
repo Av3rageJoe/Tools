@@ -10,19 +10,44 @@ parser.add_argument('-codes', help='The list containing all of the status codes'
 
 args = parser.parse_args()
 
+originalCodes = []
+originalSizes = []
+newCodes = []
+newSizes = []
+urls = []
+extendedUrls = []
+
 # Populate the url array
 urlList = open(args.urls, "r+")
-urls = []
 for url in urlList:
 		url = url.rstrip('\n')
 		if url != '':
 			urls.append(url)
 urlList.close()
 
-originalCodes = []
-originalSizes = []
-newCodes = []
-newSizes = []
+#Populate the status code and page sizes arrays
+if (args.sizes != None and args.codes != None):
+	statusCodeFile = open(args.codes, 'r+')
+	sizesFile = open(args.sizes, 'r+')
+
+	# populate the orignal codes and sizes array
+	for i in statusCodeFile:
+		if i != '':
+			i = i.rstrip('\n')
+			originalCodes.append(i)
+	statusCodeFile.close()
+	for i in sizesFile:
+		if i != '':
+			i = i.rstrip('\n')
+			originalSizes.append(i)
+	sizesFile.close()
+
+	if(len(urls) > len(originalCodes)):
+		extendedUrls = urls[-(len(urls) - len(originalCodes)):]
+		urls = urls[:(len(originalCodes))]
+
+
+
 
 # Gets the size of the url
 def getSize(url):
@@ -37,6 +62,8 @@ def getCode(url):
 def PercentageDifference(originalSize, newSize):
 	if(originalSize == newSize):
 		return False
+	if(originalSize != newSize and (originalSize == "error" or newSize == "error")):
+		return True
 	originalSize = int(originalSize)
 	newSize = int(newSize)
 	minus10= newSize * 0.9
@@ -49,15 +76,13 @@ def PercentageDifference(originalSize, newSize):
 def codeDifference(originalCode, newCode):
 	if(originalCode == newCode):
 		return False
-	originalCode = int(originalCode)
-	newCode = int(newCode)
 	if(originalCode == newCode):
 		return False
 	else:
 		return True
 
 
-def createLists(urlList):
+def createLists():
 	for url in urls:
 		if url != '':
 			try:
@@ -78,28 +103,29 @@ def createLists(urlList):
 		sizesFile.write(str(originalSizes[i]) + '\n')
 	sizesFile.close()
 
+def updateUrlList(url):
+	statusCodeFile = open(args.codes, "a+")
+	sizesFile = open(args.sizes, "a+")
+	try:
+		response = requests.get(url)
+		statusCodeFile.write(str(getCode(response)) + '\n')
+		sizesFile.write(str(getSize(response)) + '\n')
+	except:
+		statusCodeFile.write("error" + '\n')
+		sizesFile.write("error" + '\n')
+	statusCodeFile.close()
+	sizesFile.close()
+
+
 # If there is no codes and sizes supplied, then create a list of them
 if (args.sizes == None or args.codes == None):
 	# Create all the original arrays
-	createLists(urlList)
+	createLists()
 
 else:
-	statusCodeFile = open(args.codes, 'r+')
-	sizesFile = open(args.sizes, 'r+')
-
-	# populate the orignal codes and sizes array
-	for i in statusCodeFile:
-		i = i.rstrip('\n')
-		originalCodes.append(i)
-	statusCodeFile.close()
-	for i in sizesFile:
-		i = i.rstrip('\n')
-		originalSizes.append(i)
-	sizesFile.close()
-
 	differencesFile = open("Differences.txt", "w")
 	# Get the new and updated responses details
-	for i in range(0,len(urls)):
+	for i in range(0,len(originalCodes)):
 		try:
 			response = requests.get(urls[i])
 			newCodes.append(getCode(response))
@@ -107,7 +133,7 @@ else:
 		except:
 			newCodes.append("error")
 			newSizes.append("error")
-
+		# Works out if there are differences and then writes them to a file
 		if codeDifference(originalCodes[i], newCodes[i]):
 			if PercentageDifference(originalSizes[i], newSizes[i]):
 				differencesFile.write(urls[i] + ": \n\nPrevious status code: " + str(originalCodes[i]) + "\t\t New status code: " + str(newCodes[i]) + "\n")
@@ -116,5 +142,7 @@ else:
 				differencesFile.write(urls[i] + ": \n\nPrevious status code: " + str(originalCodes[i]) + "\t\t New status code: " + str(newCodes[i]) + "\n\n")
 		elif PercentageDifference(originalSizes[i], newSizes[i]):
 			differencesFile.write(urls[i] + ": \n\nPrevious page size: " + str(originalSizes[i]) + "\t\t New page size: " + str(newSizes[i]) + "\n\n")
-
-
+	if(extendedUrls):
+		for i in extendedUrls:
+			i = i.rstrip('\n')
+			updateUrlList(i)
